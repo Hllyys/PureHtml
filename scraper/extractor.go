@@ -2,7 +2,6 @@ package scraper
 
 import "github.com/PuerkitoBio/goquery"
 
-// Bu bizim basit "abstract class" görevindeki yapı
 type BaseExtractor struct {
 	Selector string
 }
