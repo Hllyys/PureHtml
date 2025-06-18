@@ -1,8 +1,6 @@
 package scraper
 
-import (
-	"github.com/PuerkitoBio/goquery"
-)
+import "github.com/PuerkitoBio/goquery"
 
 func ExtractArray(field FieldConfig, sel *goquery.Selection) interface{} {
 	var results []interface{}
@@ -13,28 +11,19 @@ func ExtractArray(field FieldConfig, sel *goquery.Selection) interface{} {
 		return results
 	}
 
-	// Tüm eşleşen elemanları sırayla işle
+	var itemConfig *FieldConfig
+	if field.Item != nil {
+		itemConfig = field.Item
+	} else {
+		itemConfig = &FieldConfig{
+			Type:      "primitive",
+			Selector:  "",
+			Transform: field.Transform,
+		}
+	}
+
 	matches.Each(func(i int, s *goquery.Selection) {
-		itemConfig := field.Item
-		if itemConfig == nil {
-			itemConfig = &FieldConfig{
-				Type:      "primitive",
-				Selector:  "",
-				Transform: field.Transform,
-			}
-		}
-
-		var val interface{}
-		switch itemConfig.Type {
-		case "primitive":
-			val = ExtractPrimitive(*itemConfig, s)
-		case "object":
-			val = ExtractObject(*itemConfig, s)
-		default:
-			val = nil
-		}
-
-		results = append(results, val)
+		results = append(results, itemConfig.Extract(s))
 	})
 
 	return results

@@ -1,6 +1,7 @@
 package scraper
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,16 +9,16 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+// Tüm transform zincirini uygular
 func ApplyTransform(value interface{}, sel *goquery.Selection, transforms Transform) interface{} {
 	strVal := normalizeToString(value)
-
 	for _, t := range transforms {
 		strVal = applySingleTransform(strVal, sel, t)
 	}
-
 	return strVal
 }
 
+// Tek bir transform adımını uygular
 func applySingleTransform(val string, sel *goquery.Selection, t string) string {
 	switch {
 	case t == "trim":
@@ -36,10 +37,10 @@ func applySingleTransform(val string, sel *goquery.Selection, t string) string {
 			return attrVal
 		}
 	}
-
 	return val
 }
 
+// Gelen her türlü veriyi stringe dönüştürür (object, array, primitive)
 func normalizeToString(value interface{}) string {
 	if value == nil {
 		return ""
@@ -59,7 +60,12 @@ func normalizeToString(value interface{}) string {
 	case bool:
 		return strconv.FormatBool(v)
 	default:
-		return fmt.Sprintf("%v", v)
+		// Geri kalan tüm map, slice, struct vs. için JSON.stringify
+		b, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Sprintf("%v", v)
+		}
+		return string(b)
 	}
 }
 
@@ -68,7 +74,7 @@ func NormalizeTransform(i interface{}) Transform {
 	case string:
 		return Transform{v}
 	case []interface{}:
-		result := make(Transform, 0, len(v))
+		var result Transform
 		for _, item := range v {
 			if str, ok := item.(string); ok {
 				result = append(result, str)

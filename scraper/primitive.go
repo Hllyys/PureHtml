@@ -2,7 +2,6 @@ package scraper
 
 import (
 	"strings"
-
 	"github.com/PuerkitoBio/goquery"
 )
 

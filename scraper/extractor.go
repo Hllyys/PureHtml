@@ -1,15 +1,26 @@
 package scraper
 
-import "github.com/PuerkitoBio/goquery"
+import (
+	"encoding/json"
+	"strings"
 
+	"github.com/PuerkitoBio/goquery"
+)
 
-type BaseExtractor struct {
-	Selector string
-}
+func ExtractWithConfig(html string, cfg Config, url string) (string, error) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	CheckErr(err)
 
-func (b *BaseExtractor) ApplySelector(sel *goquery.Selection) *goquery.Selection {
-	if b.Selector == "" {
-		return sel
-	}
-	return sel.Find(b.Selector)
+	var results []interface{}
+
+	doc.Find(cfg.Selector).Each(func(i int, s *goquery.Selection) {
+		val := ExtractConfig(s, cfg.Fields)
+		val["source_url"] = url
+		results = append(results, val)
+	})
+
+	data, err := json.MarshalIndent(results, "", "  ")
+	CheckErr(err)
+
+	return string(data), nil
 }
